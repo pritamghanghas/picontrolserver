@@ -1,0 +1,57 @@
+{
+"thermal_cam" : {
+  "url": "host_ip_address:5002/thermal.mjpg",
+  "desc": "FLIR Lepton module has a 25degree fov with 80x60 resolution"
+  },
+
+"pi_cam" : {
+  "url": "host_ip_address:5001/picam/?",
+  "desc": ["Pi camera module:",
+"Image parameter commands",
+"targetip  : IP of the target where udp stream is sent",
+"targetport: Port of the target where udp stream is sent",
+"width     : Set image width <size>. Default 1920",
+"height    : Set image height <size>. Default 1080",
+"bitrate   : Set bitrate. Use bits per second (e.g. 10MBits/s would be -b 10000000)",
+"timeout   : Time (in ms) to capture for. If not specified, set to 5s. Zero to disable",
+"framerate       : Specify the frames per second to record",
+"timed    : Cycle between capture and pause. -cycle on,off where on is record time and off is pause time in ms",
+"mode     : Force sensor mode. 0=auto. See docs for other modes available",
+"",
+"Image parameter commands",
+
+"sharpness        : Set image sharpness (-100 to 100)",
+"contrast : Set image contrast (-100 to 100)",
+"brightness       : Set image brightness (0 to 100)",
+"saturation       : Set image saturation (-100 to 100)",
+"ISO     : Set capture ISO",
+"vstab    : Turn on video stabilisation",
+"ev       : Set EV compensation",
+"exposure : Set exposure mode (see Notes)",
+"awb     : Set AWB mode (see Notes)",
+"metering : Set metering mode (see Notes)",
+"rotation        : Set image rotation (0-359)",
+"hflip    : Set horizontal flip",
+"vflip    : Set vertical flip",
+"shutter  : Set shutter speed in microseconds",
+"awbgains       : Set AWB gains - AWB mode must be off",
+"drc     : Set DRC Level",
+"",
+"Notes",
+"",
+"Exposure mode options :",
+"auto,night,nightpreview,backlight,spotlight,sports,snow,beach,verylong,fixedfps,antishake,fireworks",
+"",
+"AWB mode options :",
+"off,auto,sun,cloud,shade,tungsten,fluorescent,incandescent,flash,horizon",
+"",
+"Metering Mode options :",
+"average,spot,backlit,matrix",
+"",
+"Dynamic Range Compression (DRC) options :",
+"off,low,med,high",
+""
+]
+
+}
+}
