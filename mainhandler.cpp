@@ -36,6 +36,14 @@
 #include <QProcess>
 #include <QFile>
 
+const char * THERMAL_URL_FRAGMENT       = "thermalcam";
+const char * PICAM_URL_FRAGMENT         = "picam";
+const char * SHUTDOWN_URL_FRAGMENT      = "shutdown";
+const char * PICAM_COMMAND_QUERY        = "command";
+const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/LeptonModule/4624820/simple_mjpeg_streamer_http_server";
+const char * SHUTDOWN_COMMAND           = "sudo halt";
+const char * USAGE_JSON_PATH            = "usage.json";
+
 MainHandler::MainHandler(QObject *parent) :
     defaultPiCamCommand("raspivid -t 0 -h 720 -w 1280 -fps 25 -hf -b 2000000 -o - | gst-launch-1.0 -v fdsrc ! h264parse ! rtph264pay config-interval=1 pt=96 ! gdppay ! udpsink host=192.168.1.1 port=5001")
   ,m_thermalProcess(0)
@@ -52,22 +60,18 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
     response.writeHead(Tufao::HttpResponseStatus::OK);
     response.headers().replace("Content-Type", "text/html; charset=utf-8");
 
-    auto serverIp = request.headers().value("Host").split(':').first();
-    qDebug() << "server ip " << serverIp;
-
-
-//    qDebug() << "request debug " << request.url().toString();
+    qDebug() << "request debug " << request.url().toString();
     const QString urlString = request.url().toString();
 
-    if (urlString.contains("shutdown")) {
+    if (urlString.contains(SHUTDOWN_URL_FRAGMENT)) {
         shutdownHandler(request,response);
     }
 
-    if (urlString.contains("thermalcam")) {
+    if (urlString.contains(THERMAL_URL_FRAGMENT)) {
         thermalHandler(request,response);
     }
 
-    if (urlString.contains("picam")) {
+    if (urlString.contains(PICAM_URL_FRAGMENT)) {
         picameraHandler(request,response);
     }
 
@@ -87,12 +91,22 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
         return;
     }
 
-    QString command = "/home/pi/LeptonModule/4624820/simple_mjpeg_streamer_http_server";
+    QString command = LEPTON_MJPEG_SERVER_COMMAND;
+//    QString command = "vi /tmp/faltu";
+
+    if (m_thermalProcess) {
+        qDebug() << "calling terminate on the current thermal process";
+        m_thermalProcess->disconnect();
+        m_thermalProcess->terminate();
+        m_thermalProcess->waitForFinished();
+        thermalProcessFinished();
+    }
 
     if (!m_thermalProcess) {
+        qDebug() << "starting a new thermal process";
         m_thermalProcess = new QProcess(this);
         connect(m_thermalProcess, SIGNAL(finished(int)), SLOT(thermalProcessFinished()));
-        connect(m_thermalProcess, SIGNAL(destroyed()), SLOT(thermalProcsessFinished()));
+        connect(m_thermalProcess, SIGNAL(destroyed()), SLOT(thermalProcessFinished()));
         m_thermalProcess->start(command);
     }
 
@@ -102,6 +116,7 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
 
 void MainHandler::thermalProcessFinished()
 {
+    qDebug() << "thermal process finished";
     m_thermalProcess->deleteLater();
     m_thermalProcess = 0;
 }
@@ -110,13 +125,25 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
                      Tufao::HttpServerResponse &response)
 {
     auto url = request.url();
-    auto piCamCommand = defaultPiCamCommand;
     QUrlQuery queries(url);
-    if (queries.hasQueryItem("command")) {
-        piCamCommand = queries.queryItemValue("command");
+    if (!queries.hasQueryItem(PICAM_COMMAND_QUERY)) {
+        response << "command for picam missing";
+        response.end();
+        return;
+    }
+    auto piCamCommand = defaultPiCamCommand;
+    piCamCommand = queries.queryItemValue(PICAM_COMMAND_QUERY);
+
+    if (m_picamProcess) {
+        qDebug() << "calling terminate on current picam pipeline";
+        m_picamProcess->disconnect();
+        m_picamProcess->terminate();
+        m_picamProcess->waitForFinished();
+        piCamProcessFinished();
     }
 
     if (!m_picamProcess) {
+        qDebug() << "starting a new picam pipeline" << piCamCommand;
         m_picamProcess = new QProcess(this);
         connect(m_picamProcess, SIGNAL(finished(int)), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(destroyed()), SLOT(piCamProcessFinished()));
@@ -143,7 +170,7 @@ void MainHandler::shutdownHandler(Tufao::HttpServerRequest &request,
     QProcess *shutdownProcess = new QProcess(this);
     connect(shutdownProcess, SIGNAL(finished(int)), shutdownProcess, SLOT(deleteLater()));
     connect(shutdownProcess, SIGNAL(destroyed()), shutdownProcess, SLOT(deleteLater()));
-    shutdownProcess->start("sudo halt");
+    shutdownProcess->start(SHUTDOWN_COMMAND);
 }
 
 void MainHandler::printUsage(Tufao::HttpServerRequest &request,
@@ -151,7 +178,7 @@ void MainHandler::printUsage(Tufao::HttpServerRequest &request,
 {
     Q_UNUSED(request)
 
-    QFile file("usage.json");
+    QFile file(USAGE_JSON_PATH);
     file.open(QIODevice::ReadOnly);
     response << file.readAll();
     response.end();
