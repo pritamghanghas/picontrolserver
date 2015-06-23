@@ -40,16 +40,12 @@ const char * THERMAL_URL_FRAGMENT       = "thermalcam";
 const char * PICAM_URL_FRAGMENT         = "picam";
 const char * SHUTDOWN_URL_FRAGMENT      = "shutdown";
 const char * PICAM_COMMAND_QUERY        = "command";
-const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/LeptonModule/4624820/simple_mjpeg_streamer_http_server";
+const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/hermal_mjpeg_streamer/hermal_mjpeg_streamer";
 const char * SHUTDOWN_COMMAND           = "sudo halt";
 const char * USAGE_JSON_PATH            = "usage.json";
 
-MainHandler::MainHandler(QObject *parent) :
-    defaultPiCamCommand("raspivid -t 0 -h 720 -w 1280 -fps 25 -hf -b 2000000 -o - | gst-launch-1.0 -v fdsrc ! h264parse ! rtph264pay config-interval=1 pt=96 ! gdppay ! udpsink host=192.168.1.1 port=5001")
-  ,m_thermalProcess(0)
-  ,m_picamProcess(0)
-  ,m_hasThermal(false)
-  ,QObject(parent)
+MainHandler::MainHandler(QObject *parent) : QObject(parent),
+   m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0)
 {
 
 }
@@ -131,8 +127,8 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
         response.end();
         return;
     }
-    auto piCamCommand = defaultPiCamCommand;
-    piCamCommand = queries.queryItemValue(PICAM_COMMAND_QUERY);
+
+    auto piCamCommand = queries.queryItemValue(PICAM_COMMAND_QUERY);
 
     if (m_picamProcess) {
         qDebug() << "calling terminate on current picam pipeline";

@@ -65,11 +65,9 @@ private:
     void shutdownHandler(Tufao::HttpServerRequest &request,
                          Tufao::HttpServerResponse &response);
 
-    const QString defaultPiCamCommand;
-
+    bool m_hasThermal;
     QProcess *m_thermalProcess, *m_picamProcess;
 
-    bool m_hasThermal;
 };
 
 #endif // MAINHANDLER_H
