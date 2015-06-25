@@ -98,7 +98,7 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
     auto thermalCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
 
 
-    if (thermalCommand.contains(TERMINATE_COMMAND)) {
+    if (thermalCommand.contains(TERMINATE_COMMAND) && m_thermalProcess) {
         terminateProcess(m_thermalProcess);
         thermalProcessFinished();
         response << "thermal process terminated";
@@ -158,7 +158,7 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
 
     auto piCamCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
 
-    if (piCamCommand.contains(TERMINATE_COMMAND)) {
+    if (piCamCommand.contains(TERMINATE_COMMAND) && m_picamProcess) {
         terminateProcess(m_picamProcess);
         piCamProcessFinished();
         response << "picam process terminated";
@@ -179,7 +179,6 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
         m_picamProcess->setStandardErrorFile("./picam.err");
         connect(m_picamProcess, SIGNAL(finished(int)), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(destroyed()), SLOT(piCamProcessFinished()));
-        connect(m_picamProcess, SIGNAL(started()), SLOT(piCamProcessStarted()));
         m_gstProcess = new QProcess(m_picamProcess);
         m_gstProcess->setStandardErrorFile("./gst.out");
         m_gstProcess->setStandardErrorFile("./gst.err");
@@ -196,20 +195,6 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
     response << "starting the server with command : " << piCamCommand.toUtf8();
 
     response.end();
-}
-
-void MainHandler::piCamProcessStarted()
-{
-    qDebug() << "picam process started" << m_picamProcess->children();
-    QObjectList childeren = m_picamProcess->children();
-    foreach(QObject *child, childeren) {
-        QProcess *childptr = qobject_cast<QProcess*>(child);
-        if (childptr == 0) {
-            qDebug() << "failed to csast the child to QProcess";
-            return;
-        }
-        qDebug() << childptr->program();
-    }
 }
 
 void MainHandler::piCamProcessFinished()
