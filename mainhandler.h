@@ -65,6 +65,7 @@ private:
     void shutdownHandler(Tufao::HttpServerRequest &request,
                          Tufao::HttpServerResponse &response);
 
+    void terminateProcess(QProcess *process) const;
     bool m_hasThermal;
     QProcess *m_thermalProcess, *m_picamProcess;
 

@@ -39,10 +39,11 @@
 const char * THERMAL_URL_FRAGMENT       = "thermalcam";
 const char * PICAM_URL_FRAGMENT         = "picam";
 const char * SHUTDOWN_URL_FRAGMENT      = "shutdown";
-const char * PICAM_COMMAND_QUERY        = "command";
+const char * CAM_COMMAND_QUERY          = "command";
 const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/hermal_mjpeg_streamer/hermal_mjpeg_streamer";
 const char * SHUTDOWN_COMMAND           = "sudo halt";
 const char * USAGE_JSON_PATH            = "usage.json";
+const char * TERMINATE_COMMAND          = "terminate";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
    m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0)
@@ -87,14 +88,30 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
         return;
     }
 
+    QUrlQuery queries(request.url());
+    if (!queries.hasQueryItem(CAM_COMMAND_QUERY)) {
+        response << "command for thermal missing";
+        response.end();
+        return;
+    }
+
+    auto thermalCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
+
+
+    if (thermalCommand.contains(TERMINATE_COMMAND)) {
+        terminateProcess(m_thermalProcess);
+        thermalProcessFinished();
+        response << "thermal process terminated";
+        response.end();
+        return;
+    }
+
     QString command = LEPTON_MJPEG_SERVER_COMMAND;
 //    QString command = "vi /tmp/faltu";
 
     if (m_thermalProcess) {
         qDebug() << "calling terminate on the current thermal process";
-        m_thermalProcess->disconnect();
-        m_thermalProcess->terminate();
-        m_thermalProcess->waitForFinished();
+        terminateProcess(m_thermalProcess);
         thermalProcessFinished();
     }
 
@@ -110,6 +127,16 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
     response.end();
 }
 
+void MainHandler::terminateProcess(QProcess *process) const
+{
+    if (process == 0) {
+        return;
+    }
+    process->disconnect();
+    process->terminate();
+    process->waitForFinished();
+}
+
 void MainHandler::thermalProcessFinished()
 {
     qDebug() << "thermal process finished";
@@ -120,21 +147,27 @@ void MainHandler::thermalProcessFinished()
 void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
                      Tufao::HttpServerResponse &response)
 {
-    auto url = request.url();
+    QUrl url = request.url();
     QUrlQuery queries(url);
-    if (!queries.hasQueryItem(PICAM_COMMAND_QUERY)) {
+    if (!queries.hasQueryItem(CAM_COMMAND_QUERY)) {
         response << "command for picam missing";
         response.end();
         return;
     }
 
-    auto piCamCommand = queries.queryItemValue(PICAM_COMMAND_QUERY);
+    auto piCamCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
+
+    if (piCamCommand.contains(TERMINATE_COMMAND)) {
+        terminateProcess(m_picamProcess);
+        piCamProcessFinished();
+        response << "picam process terminated";
+        response.end();
+        return;
+    }
 
     if (m_picamProcess) {
         qDebug() << "calling terminate on current picam pipeline";
-        m_picamProcess->disconnect();
-        m_picamProcess->terminate();
-        m_picamProcess->waitForFinished();
+        terminateProcess(m_picamProcess);
         piCamProcessFinished();
     }
 
