@@ -189,11 +189,14 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
 void MainHandler::piCamProcessStarted()
 {
     qDebug() << "picam process started" << m_picamProcess->children();
-//    QObjectList childeren = m_picamProcess->children();
-//    foreach(QObject *child, childeren) {
-//        QProcess *childptr = (QProcess*)child;
-//        qDebug() << childptr->program();
-//    }
+    QObjectList childeren = m_picamProcess->children();
+    foreach(QObject *child, childeren) {
+        QProcess *childptr = qobject_cast<QProcess*>child;
+        if (childptr == 0) {
+            qDebug() << "failed to csast the child to QProcess";
+        }
+        qDebug() << childptr->program();
+    }
 }
 
 void MainHandler::piCamProcessFinished()
