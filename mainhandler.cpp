@@ -103,7 +103,7 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
         m_thermalProcess = new QProcess(this);
         connect(m_thermalProcess, SIGNAL(finished(int)), SLOT(thermalProcessFinished()));
         connect(m_thermalProcess, SIGNAL(destroyed()), SLOT(thermalProcessFinished()));
-        m_thermalProcess->start(command);
+        m_thermalProcess->start("/bin/sh " + command);
     }
 
     response << "started thermal server with command : " << command.toUtf8();
@@ -145,7 +145,7 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
         m_picamProcess->setStandardErrorFile("./picam.err");
         connect(m_picamProcess, SIGNAL(finished(int)), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(destroyed()), SLOT(piCamProcessFinished()));
-        m_picamProcess->start(piCamCommand);
+        m_picamProcess->start("/bin/sh " + piCamCommand);
     }
     response << "starting the server with command : " << piCamCommand.toUtf8();
 
@@ -155,6 +155,7 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
 void MainHandler::piCamProcessFinished()
 {
     qDebug() << "recieved picam process finsihed or termintaed";
+    m_picamProcess->disconnect();
     m_picamProcess->deleteLater();
     m_picamProcess = 0;
 }
