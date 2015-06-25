@@ -46,7 +46,7 @@ const char * USAGE_JSON_PATH            = "usage.json";
 const char * TERMINATE_COMMAND          = "terminate";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
-   m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0)
+   m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0), m_gstProcess(0)
 {
 
 }
@@ -168,18 +168,27 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
     if (m_picamProcess) {
         qDebug() << "calling terminate on current picam pipeline";
         terminateProcess(m_picamProcess);
-        piCamProcessFinished();
     }
 
     if (!m_picamProcess) {
         qDebug() << "starting a new picam pipeline" << piCamCommand;
         m_picamProcess = new QProcess(this);
-        m_picamProcess->setStandardOutputFile("./picam.out");
         m_picamProcess->setStandardErrorFile("./picam.err");
         connect(m_picamProcess, SIGNAL(finished(int)), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(destroyed()), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(started()), SLOT(piCamProcessStarted()));
-        m_picamProcess->start(QString("/bin/sh -c ") + "\"" + piCamCommand + "\"");
+        m_gstProcess = new QProcess(m_picamProcess);
+        m_gstProcess->setStandardErrorFile("./gst.out");
+        m_gstProcess->setStandardErrorFile("./gst.err");
+        m_picamProcess->setStandardOutputProcess(m_gstProcess);
+        QStringList commands= piCamCommand.split("|");
+        if (commands.size() <2 ) {
+            qDebug() << "for picam the process needs a pipe";
+            terminateProcess(m_picamProcess);
+            return;
+        }
+        m_gstProcess->start(commands.last());
+        m_picamProcess->start(commands.first());
     }
     response << "starting the server with command : " << piCamCommand.toUtf8();
 
@@ -194,6 +203,7 @@ void MainHandler::piCamProcessStarted()
         QProcess *childptr = qobject_cast<QProcess*>(child);
         if (childptr == 0) {
             qDebug() << "failed to csast the child to QProcess";
+            return;
         }
         qDebug() << childptr->program();
     }

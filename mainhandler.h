@@ -68,7 +68,7 @@ private:
 
     void terminateProcess(QProcess *process) const;
     bool m_hasThermal;
-    QProcess *m_thermalProcess, *m_picamProcess;
+    QProcess *m_thermalProcess, *m_picamProcess, *m_gstProcess;
 
 };
 
