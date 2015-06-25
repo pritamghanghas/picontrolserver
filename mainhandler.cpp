@@ -191,7 +191,7 @@ void MainHandler::piCamProcessStarted()
     qDebug() << "picam process started" << m_picamProcess->children();
     QObjectList childeren = m_picamProcess->children();
     foreach(QObject *child, childeren) {
-        QProcess *childptr = qobject_cast<QProcess*>child;
+        QProcess *childptr = qobject_cast<QProcess*>(child);
         if (childptr == 0) {
             qDebug() << "failed to csast the child to QProcess";
         }
