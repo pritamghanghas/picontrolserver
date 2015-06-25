@@ -141,6 +141,8 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
     if (!m_picamProcess) {
         qDebug() << "starting a new picam pipeline" << piCamCommand;
         m_picamProcess = new QProcess(this);
+        m_picamProcess->setStandardOutputFile("./picam.out");
+        m_picamProcess->setStandardErrorFile("./picam.err");
         connect(m_picamProcess, SIGNAL(finished(int)), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(destroyed()), SLOT(piCamProcessFinished()));
         m_picamProcess->start(piCamCommand);
@@ -152,6 +154,7 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
 
 void MainHandler::piCamProcessFinished()
 {
+    qDebug() << "recieved picam process finsihed or termintaed";
     m_picamProcess->deleteLater();
     m_picamProcess = 0;
 }
