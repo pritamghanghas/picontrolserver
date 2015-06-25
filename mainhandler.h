@@ -51,6 +51,7 @@ public slots:
 private slots:
     void thermalProcessFinished();
     void piCamProcessFinished();
+    void piCamProcessStarted();
 
 private:
     void printUsage(Tufao::HttpServerRequest &request,

@@ -178,11 +178,22 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
         m_picamProcess->setStandardErrorFile("./picam.err");
         connect(m_picamProcess, SIGNAL(finished(int)), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(destroyed()), SLOT(piCamProcessFinished()));
+        connect(m_picamProcess, SIGNAL(started()), SLOT(piCamProcessStarted()));
         m_picamProcess->start(QString("/bin/sh -c ") + "\"" + piCamCommand + "\"");
     }
     response << "starting the server with command : " << piCamCommand.toUtf8();
 
     response.end();
+}
+
+void MainHandler::piCamProcessStarted()
+{
+    qDebug() << "picam process started";
+    QObjectList childeren = m_picamProcess->children();
+    foreach(QObject *child, childeren) {
+        QProcess *childptr = (QProcess*)child;
+        qDebug() << childptr->program();
+    }
 }
 
 void MainHandler::piCamProcessFinished()
