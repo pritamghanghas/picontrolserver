@@ -113,6 +113,7 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
         qDebug() << "calling terminate on the current thermal process";
         terminateProcess(m_thermalProcess);
         thermalProcessFinished();
+        respone << "old thermal process finsihsed";
     }
 
     if (!m_thermalProcess) {
@@ -168,6 +169,8 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
     if (m_picamProcess) {
         qDebug() << "calling terminate on current picam pipeline";
         terminateProcess(m_picamProcess);
+        piCamProcessFinished();
+        response << "picam process terminated";
     }
 
     if (!m_picamProcess) {
