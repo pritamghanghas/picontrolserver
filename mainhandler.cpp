@@ -113,7 +113,7 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
         qDebug() << "calling terminate on the current thermal process";
         terminateProcess(m_thermalProcess);
         thermalProcessFinished();
-        respone << "old thermal process finsihsed";
+        response << "old thermal process finsihsed";
     }
 
     if (!m_thermalProcess) {
