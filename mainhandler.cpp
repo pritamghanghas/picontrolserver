@@ -188,12 +188,12 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
 
 void MainHandler::piCamProcessStarted()
 {
-    qDebug() << "picam process started";
-    QObjectList childeren = m_picamProcess->children();
-    foreach(QObject *child, childeren) {
-        QProcess *childptr = (QProcess*)child;
-        qDebug() << childptr->program();
-    }
+    qDebug() << "picam process started" << m_picamProcess->children();
+//    QObjectList childeren = m_picamProcess->children();
+//    foreach(QObject *child, childeren) {
+//        QProcess *childptr = (QProcess*)child;
+//        qDebug() << childptr->program();
+//    }
 }
 
 void MainHandler::piCamProcessFinished()
