@@ -4,7 +4,7 @@ PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, int discov
     m_discoveryMessage(discoveryMessage),
     QObject(parent)
 {
-    m_socket.bind(31311);
+//    m_socket.bind(31311);
     sendHelloDataGram();
 
     m_discoveryIntervalTimer.setInterval(discoveryInterval);
