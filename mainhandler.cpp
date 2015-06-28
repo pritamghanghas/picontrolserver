@@ -40,7 +40,7 @@ const char * THERMAL_URL_FRAGMENT       = "thermalcam";
 const char * PICAM_URL_FRAGMENT         = "picam";
 const char * SHUTDOWN_URL_FRAGMENT      = "shutdown";
 const char * CAM_COMMAND_QUERY          = "command";
-const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/hermal_mjpeg_streamer/hermal_mjpeg_streamer";
+const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/thermal_mjpeg_streamer/thermal_mjpeg_streamer";
 const char * SHUTDOWN_COMMAND           = "sudo halt";
 const char * USAGE_JSON_PATH            = "usage.json";
 const char * TERMINATE_COMMAND          = "terminate";
@@ -121,7 +121,7 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
         m_thermalProcess = new QProcess(this);
         connect(m_thermalProcess, SIGNAL(finished(int)), SLOT(thermalProcessFinished()));
         connect(m_thermalProcess, SIGNAL(destroyed()), SLOT(thermalProcessFinished()));
-        m_thermalProcess->start("/bin/sh " + command);
+        m_thermalProcess->start(command);
     }
 
     response << "started thermal server with command : " << command.toUtf8();
