@@ -17,11 +17,13 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    mainhandler.cpp
+    mainhandler.cpp \
+    pidiscoverybeacon.cpp
 
 HEADERS += \
     mainhandler.h \
-    constants.h
+    constants.h \
+    pidiscoverybeacon.h
 
 OTHER_FILES += \
     usage.json
