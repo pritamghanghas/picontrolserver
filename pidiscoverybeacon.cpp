@@ -8,13 +8,14 @@ PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, int discov
     sendHelloDataGram();
 
     m_discoveryIntervalTimer.setInterval(discoveryInterval);
-    m_discoveryIntervalTimer.setSingleShot(true);
+    //m_discoveryIntervalTimer.setSingleShot(true);
     connect(&m_discoveryIntervalTimer, SIGNAL(timeout()), SLOT(sendHelloDataGram()));
     m_discoveryIntervalTimer.start();
 }
 
 void PiDiscoveryBeacon::sendHelloDataGram()
 {
+    qDebug() << "sending hello datagram";
     QByteArray helloDatagram(m_discoveryMessage.toUtf8());
     m_socket.writeDatagram(helloDatagram, QHostAddress::Broadcast, 31311);
 }
