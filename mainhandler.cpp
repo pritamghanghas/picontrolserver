@@ -44,9 +44,10 @@ const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/thermal_mjpeg_streamer/therm
 const char * SHUTDOWN_COMMAND           = "sudo halt";
 const char * USAGE_JSON_PATH            = "usage.json";
 const char * TERMINATE_COMMAND          = "terminate";
+const char * MAVPROXY_FRAGMENT          = "mavproxy";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
-   m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0), m_gstProcess(0)
+   m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0), m_mavproxyProcess(0), m_gstProcess(0)
 {
 
 }
@@ -72,9 +73,60 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
         picameraHandler(request,response);
     }
 
+    if (urlString.contains(MAVPROXY_FRAGMENT)) {
+        mavproxyHandler(request,response);
+    }
+
     printUsage(request,response);
 
     return true;
+}
+
+void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
+                                  Tufao::HttpServerResponse &response)
+{
+    Q_UNUSED(request)
+
+    if (!m_hasMavProxy) {
+        response << "mavproxy not enabled";
+        response.end();
+        return;
+    }
+
+    QUrlQuery queries(request.url());
+    if (!queries.hasQueryItem(CAM_COMMAND_QUERY)) {
+        response << "command for mavproxy missing";
+        response.end();
+        return;
+    }
+
+    auto mavProxyCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
+
+    if (mavProxyCommand.contains(TERMINATE_COMMAND) && m_mavproxyProcess) {
+        terminateProcess(m_mavproxyProcess);
+        mavPoxyProcessFinished();
+        response << "mavproxy process terminated";
+        response.end();
+        return;
+    }
+
+    if (m_mavproxyProcess) {
+        qDebug() << "calling terminate on the current mavproxy process";
+        terminateProcess(m_mavproxyProcess);
+        mavPoxyProcessFinished();
+        response << "old mavproxy process finsihsed";
+    }
+
+    if (!m_mavproxyProcess) {
+        qDebug() << "starting a new mavproxy process";
+        m_mavproxyProcess = new QProcess(this);
+        connect(m_mavproxyProcess, SIGNAL(finished(int)), SLOT(mavPoxyProcessFinished()));
+        connect(m_mavproxyProcess, SIGNAL(destroyed()), SLOT(mavPoxyProcessFinished()));
+        m_mavproxyProcess->start(mavProxyCommand);
+    }
+
+    response << "started mav server with command : " << mavProxyCommand.toUtf8();
+    response.end();
 }
 
 void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
@@ -143,6 +195,13 @@ void MainHandler::thermalProcessFinished()
     qDebug() << "thermal process finished";
     m_thermalProcess->deleteLater();
     m_thermalProcess = 0;
+}
+
+void MainHandler::mavPoxyProcessFinished()
+{
+    qDebug() << "mav proxy process finished";
+    m_mavproxyProcess->deleteLater();
+    m_mavproxyProcess = 0;
 }
 
 void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,

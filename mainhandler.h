@@ -39,6 +39,16 @@ public:
         m_hasThermal = enabled;
     }
 
+    void setMavProxyEnabled(bool enabled = true)
+    {
+        m_hasMavProxy = true;
+    }
+
+    bool getmavEnabled()
+    {
+        return m_hasMavProxy;
+    }
+
     bool getThermalEnabled() const
     {
         return m_hasThermal;
@@ -51,6 +61,7 @@ public slots:
 private slots:
     void thermalProcessFinished();
     void piCamProcessFinished();
+    void mavPoxyProcessFinished();
 
 private:
     void printUsage(Tufao::HttpServerRequest &request,
@@ -65,10 +76,17 @@ private:
     void shutdownHandler(Tufao::HttpServerRequest &request,
                          Tufao::HttpServerResponse &response);
 
-    void terminateProcess(QProcess *process) const;
-    bool m_hasThermal;
-    QProcess *m_thermalProcess, *m_picamProcess, *m_gstProcess;
+    void mavproxyHandler(Tufao::HttpServerRequest &request,
+                         Tufao::HttpServerResponse &response);
 
+    void terminateProcess(QProcess *process) const;
+
+    bool         m_hasThermal,
+                 m_hasMavProxy;
+    QProcess    *m_thermalProcess,
+                *m_picamProcess,
+                *m_gstProcess,
+                *m_mavproxyProcess;
 };
 
 #endif // MAINHANDLER_H

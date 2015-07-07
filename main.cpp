@@ -21,6 +21,11 @@ int main(int argc, char *argv[])
         h.setThermalEnabled(true);
     }
 
+    if (qEnvironmentVariableIsEmpty("mavproxy")) {
+        discoveryMessage += " mavproxy";
+        h.setMavProxyEnabled(true);
+    }
+
     Tufao::HttpServerRequestRouter router{
         {QRegularExpression{"^/([^/]+)$"}, h},
         {QRegularExpression{".*"}, h}
