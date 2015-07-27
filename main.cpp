@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
         h.setThermalEnabled(true);
     }
 
-    if (qEnvironmentVariableIsEmpty("mavproxy")) {
+    if (qEnvironmentVariableIsSet("mavproxy")) {
         discoveryMessage += " mavproxy";
         h.setMavProxyEnabled(true);
     }

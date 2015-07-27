@@ -119,7 +119,7 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
     }
 
     if (!m_mavproxyProcess) {
-        qDebug() << "starting a new mavproxy process";
+        qDebug() << "starting a new mavproxy process" << mavProxyCommand;
         m_mavproxyProcess = new QProcess(this);
         connect(m_mavproxyProcess, SIGNAL(finished(int)), SLOT(mavPoxyProcessFinished()));
         connect(m_mavproxyProcess, SIGNAL(destroyed()), SLOT(mavPoxyProcessFinished()));
