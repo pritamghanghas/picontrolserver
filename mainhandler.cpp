@@ -45,6 +45,7 @@ const char * SHUTDOWN_COMMAND           = "sudo halt";
 const char * USAGE_JSON_PATH            = "usage.json";
 const char * TERMINATE_COMMAND          = "terminate";
 const char * MAVPROXY_FRAGMENT          = "mavproxy";
+const char * RASPILOR_FRAGMENT          = "raspilot";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
    m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0), m_mavproxyProcess(0), m_gstProcess(0)
