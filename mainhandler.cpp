@@ -111,12 +111,12 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
         return;
     }
 
-    if (m_mavproxyProcess) {
-        qDebug() << "calling terminate on the current mavproxy process";
-        terminateProcess(m_mavproxyProcess);
-        mavPoxyProcessFinished();
-        response << "old mavproxy process finsihsed";
-    }
+//    if (m_mavproxyProcess) {
+//        qDebug() << "calling terminate on the current mavproxy process";
+//        terminateProcess(m_mavproxyProcess);
+//        mavPoxyProcessFinished();
+//        response << "old mavproxy process finsihsed";
+//    }
 
     if (!m_mavproxyProcess) {
         qDebug() << "starting a new mavproxy process" << mavProxyCommand;
@@ -124,9 +124,9 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
         connect(m_mavproxyProcess, SIGNAL(finished(int)), SLOT(mavPoxyProcessFinished()));
         connect(m_mavproxyProcess, SIGNAL(destroyed()), SLOT(mavPoxyProcessFinished()));
         m_mavproxyProcess->start(mavProxyCommand);
+        response << "started mav server with command : " << mavProxyCommand.toUtf8();
     }
 
-    response << "started mav server with command : " << mavProxyCommand.toUtf8();
     response.end();
 }
 

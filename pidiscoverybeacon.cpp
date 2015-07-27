@@ -15,7 +15,7 @@ PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, int discov
 
 void PiDiscoveryBeacon::sendHelloDataGram()
 {
-    qDebug() << "sending hello datagram";
+    qDebug() << "sending hello datagram: " << m_discoveryMessage;
     QByteArray helloDatagram(m_discoveryMessage.toUtf8());
     m_socket.writeDatagram(helloDatagram, QHostAddress::Broadcast, 31311);
 }
