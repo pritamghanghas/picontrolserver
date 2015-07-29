@@ -54,6 +54,7 @@ public:
         return m_hasThermal;
     }
 
+
 public slots:
     bool handleRequest(Tufao::HttpServerRequest &request,
                        Tufao::HttpServerResponse &response) override;
@@ -73,7 +74,7 @@ private:
     void thermalHandler(Tufao::HttpServerRequest &request,
                         Tufao::HttpServerResponse &response);
 
-    void shutdownHandler(Tufao::HttpServerRequest &request,
+    void oscontrolHandler(Tufao::HttpServerRequest &request,
                          Tufao::HttpServerResponse &response);
 
     void mavproxyHandler(Tufao::HttpServerRequest &request,

@@ -21,6 +21,8 @@
   */
 
 #include "mainhandler.h"
+#include "pidiscoverybeacon.h"
+
 #include <Tufao/HttpServerRequest>
 #include <Tufao/Headers>
 #include <Tufao/HttpServer>
@@ -38,14 +40,12 @@
 
 const char * THERMAL_URL_FRAGMENT       = "thermalcam";
 const char * PICAM_URL_FRAGMENT         = "picam";
-const char * SHUTDOWN_URL_FRAGMENT      = "shutdown";
-const char * CAM_COMMAND_QUERY          = "command";
+const char * OSCONTROL_URL_FRAGMENT     = "shutdown";
+const char * COMMAND_QUERY              = "command";
 const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/thermal_mjpeg_streamer/thermal_mjpeg_streamer";
-const char * SHUTDOWN_COMMAND           = "sudo halt";
 const char * USAGE_JSON_PATH            = "usage.json";
 const char * TERMINATE_COMMAND          = "terminate";
 const char * MAVPROXY_FRAGMENT          = "mavproxy";
-const char * RASPILOR_FRAGMENT          = "raspilot";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
    m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0), m_mavproxyProcess(0), m_gstProcess(0)
@@ -62,8 +62,8 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
     qDebug() << "request debug " << request.url().toString();
     const QString urlString = request.url().toString();
 
-    if (urlString.contains(SHUTDOWN_URL_FRAGMENT)) {
-        shutdownHandler(request,response);
+    if (urlString.contains(OSCONTROL_URL_FRAGMENT)) {
+        oscontrolHandler(request,response);
     }
 
     if (urlString.contains(THERMAL_URL_FRAGMENT)) {
@@ -95,13 +95,13 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
     }
 
     QUrlQuery queries(request.url());
-    if (!queries.hasQueryItem(CAM_COMMAND_QUERY)) {
+    if (!queries.hasQueryItem(COMMAND_QUERY)) {
         response << "command for mavproxy missing";
         response.end();
         return;
     }
 
-    auto mavProxyCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
+    auto mavProxyCommand = queries.queryItemValue(COMMAND_QUERY);
 
     if (mavProxyCommand.contains(TERMINATE_COMMAND) && m_mavproxyProcess) {
         terminateProcess(m_mavproxyProcess);
@@ -142,13 +142,13 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
     }
 
     QUrlQuery queries(request.url());
-    if (!queries.hasQueryItem(CAM_COMMAND_QUERY)) {
+    if (!queries.hasQueryItem(COMMAND_QUERY)) {
         response << "command for thermal missing";
         response.end();
         return;
     }
 
-    auto thermalCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
+    auto thermalCommand = queries.queryItemValue(COMMAND_QUERY);
 
 
     if (thermalCommand.contains(TERMINATE_COMMAND) && m_thermalProcess) {
@@ -160,7 +160,6 @@ void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
     }
 
     QString command = LEPTON_MJPEG_SERVER_COMMAND;
-//    QString command = "vi /tmp/faltu";
 
     if (m_thermalProcess) {
         qDebug() << "calling terminate on the current thermal process";
@@ -210,13 +209,13 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
 {
     QUrl url = request.url();
     QUrlQuery queries(url);
-    if (!queries.hasQueryItem(CAM_COMMAND_QUERY)) {
+    if (!queries.hasQueryItem(COMMAND_QUERY)) {
         response << "command for picam missing";
         response.end();
         return;
     }
 
-    auto piCamCommand = queries.queryItemValue(CAM_COMMAND_QUERY);
+    auto piCamCommand = queries.queryItemValue(COMMAND_QUERY);
 
     if (piCamCommand.contains(TERMINATE_COMMAND) && m_picamProcess) {
         terminateProcess(m_picamProcess);
@@ -266,16 +265,25 @@ void MainHandler::piCamProcessFinished()
 }
 
 
-void MainHandler::shutdownHandler(Tufao::HttpServerRequest &request,
+void MainHandler::oscontrolHandler(Tufao::HttpServerRequest &request,
                      Tufao::HttpServerResponse &response)
 {
-    Q_UNUSED(request)
-    response << "shutting down";
+    QUrl url = request.url();
+    QUrlQuery queries(url);
+    if (!queries.hasQueryItem(COMMAND_QUERY)) {
+        response << "command query missing";
+        response.end();
+        return;
+    }
+
+    QString command = queries.queryItemValue(COMMAND_QUERY);
+    response << "executing command : " << command.toUtf8();
     response.end();
-    QProcess *shutdownProcess = new QProcess(this);
-    connect(shutdownProcess, SIGNAL(finished(int)), shutdownProcess, SLOT(deleteLater()));
-    connect(shutdownProcess, SIGNAL(destroyed()), shutdownProcess, SLOT(deleteLater()));
-    shutdownProcess->start(SHUTDOWN_COMMAND);
+
+    QProcess *osProcess = new QProcess(this);
+    connect(osProcess, SIGNAL(finished(int)), osProcess, SLOT(deleteLater()));
+    connect(osProcess, SIGNAL(destroyed()), osProcess, SLOT(deleteLater()));
+    osProcess->start(command);
 }
 
 void MainHandler::printUsage(Tufao::HttpServerRequest &request,
@@ -284,7 +292,14 @@ void MainHandler::printUsage(Tufao::HttpServerRequest &request,
     Q_UNUSED(request)
 
     QFile file(USAGE_JSON_PATH);
-    file.open(QIODevice::ReadOnly);
-    response << file.readAll();
+    if (!file.open(QIODevice::ReadOnly)) {
+        response << "couldn't open usage json file : " << USAGE_JSON_PATH;
+        response.end();
+        return;
+    }
+    QString jsonData = file.readAll();
+    response.headers().insert("Content-Type", "application/json");
+    jsonData.replace("$PI_ADDRESS", PiDiscoveryBeacon::deviceAddress());
+    response << jsonData.toUtf8();
     response.end();
 }

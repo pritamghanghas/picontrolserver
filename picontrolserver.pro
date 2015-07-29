@@ -9,7 +9,7 @@ QT       += core
 QT       -= gui
 
 TARGET = picontrolserver
-CONFIG   += console
+CONFIG   += console network
 CONFIG   -= app_bundle
 CONFIG += C++11 TUFAO1
 

@@ -10,6 +10,7 @@ class PiDiscoveryBeacon : public QObject
     Q_OBJECT
 public:
     explicit PiDiscoveryBeacon(const QString &discoveryMessage, int discoveryInterval, QObject *parent = 0);
+    static QString deviceAddress();
 
 private slots:
     void sendHelloDataGram();
