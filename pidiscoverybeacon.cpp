@@ -16,15 +16,8 @@ void PiDiscoveryBeacon::sendHelloDataGram()
 {
     qDebug() << "sending hello datagram: " << m_discoveryMessage;
     QByteArray helloDatagram(m_discoveryMessage.toUtf8());
-    QString address = deviceAddress();
-    QStringList octets = address.split('.');
-    if (octets.size() < 4) {
-        qDebug() << "failed to find proper address to send udp broadcast";
-        return;
-    }
-    QString broadcastAddress = octets[0] + octets[1] + octets[2] + "255";
 
-    qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress(broadcastAddress), 31311);
+    qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress("192.168.42.255"), 31311);
     if (rc == -1) {
         qDebug() << "failed to send hello datagram";
     }

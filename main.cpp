@@ -7,7 +7,9 @@
 #include "mainhandler.h"
 #include "pidiscoverybeacon.h"
 
-#define BEACON_INTERVAL 30*1000 // 30sec
+#define BEACON_INTERVAL 3*1000 // 3sec
+
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
