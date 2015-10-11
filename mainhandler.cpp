@@ -40,7 +40,7 @@
 
 const char * THERMAL_URL_FRAGMENT       = "thermalcam";
 const char * PICAM_URL_FRAGMENT         = "picam";
-const char * OSCONTROL_URL_FRAGMENT     = "shutdown";
+const char * OSCONTROL_URL_FRAGMENT     = "os_command";
 const char * COMMAND_QUERY              = "command";
 const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/thermal_mjpeg_streamer/thermal_mjpeg_streamer";
 const char * USAGE_JSON_PATH            = "usage.json";
