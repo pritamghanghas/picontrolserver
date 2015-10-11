@@ -17,7 +17,7 @@ void PiDiscoveryBeacon::sendHelloDataGram()
 {
     qDebug() << "sending hello datagram: " << m_discoveryMessage;
     QByteArray helloDatagram(m_discoveryMessage.toUtf8());
-    qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress::Broadcast, 31311);
+    qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress("192.168.42.255"), 31311);
     if (rc == -1) {
         qDebug() << "failed to send hello datagram";
     }
