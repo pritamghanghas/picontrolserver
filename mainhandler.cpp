@@ -38,19 +38,23 @@
 #include <QProcess>
 #include <QFile>
 
-const char * THERMAL_URL_FRAGMENT       = "thermalcam";
+const char * UVC_URL_FRAGMENT           = "uvccam";
 const char * PICAM_URL_FRAGMENT         = "picam";
 const char * OSCONTROL_URL_FRAGMENT     = "os_command";
+const char * HOSTAPD_GET_FRAGMENT       = "hostapdget";
+const char * HOSTAPD_SET_HANDLER        = "hostapdset";
+const char * HOSTAPD_CONF_FILE          = "/etc/hostapd/hostapd.conf";
 const char * COMMAND_QUERY              = "command";
-const char * LEPTON_MJPEG_SERVER_COMMAND= "/home/pi/thermal_mjpeg_streamer/thermal_mjpeg_streamer";
 const char * USAGE_JSON_PATH            = "usage.json";
 const char * TERMINATE_COMMAND          = "terminate";
 const char * MAVPROXY_FRAGMENT          = "mavproxy";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
-   m_hasThermal(false), m_thermalProcess(0), m_picamProcess(0), m_mavproxyProcess(0), m_gstProcess(0)
+   m_hasUvc(false), m_uvcProcess(0), m_picamProcess(0), m_mavproxyProcess(0), m_gstProcess(0)
 {
-
+    m_hostApdConfig.insert("ssid", "");
+    m_hostApdConfig.insert("password", "");
+    m_hostApdConfig.insert("channel", "");
 }
 
 bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
@@ -66,8 +70,8 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
         oscontrolHandler(request,response);
     }
 
-    if (urlString.contains(THERMAL_URL_FRAGMENT)) {
-        thermalHandler(request,response);
+    if (urlString.contains(UVC_URL_FRAGMENT)) {
+        uvcHandler(request,response);
     }
 
     if (urlString.contains(PICAM_URL_FRAGMENT)) {
@@ -81,6 +85,107 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
     printUsage(request,response);
 
     return true;
+}
+
+void MainHandler::hostAPDGetHandler(Tufao::HttpServerRequest &request,
+                                    Tufao::HttpServerResponse &response)
+{
+    response << QString("%1;%2;%3").arg(m_hostAPDSSID, m_hostAPDPassword, m_hostAPDChannel);
+    response.end();
+    return;
+}
+
+void MainHandler::hostAPDSetHandler(Tufao::HttpServerRequest &request,
+                                    Tufao::HttpServerResponse &response)
+{
+    QUrlQuery queries(request.url());
+    if (!queries.hasQueryItem("ssid")) {
+        m_hostAPDSSID = queries.queryItemValue("ssid");
+    }
+
+    if (!queries.hasQueryItem("password")) {
+        m_hostAPDPassword = queries.queryItemValue("password");
+    }
+
+    if (!queries.hasQueryItem("channel")) {
+        m_hostAPDChannel = queries.queryItemValue("channel");
+    }
+
+    writeHostAPDConf();
+}
+
+void MainHandler::parseHostAPDConf()
+{
+    QFile confFile(HOSTAPD_CONF_FILE);
+
+    if (!confFile.exists()) {
+        return;
+    }
+
+    if (!confFile.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    QTextStream in(&confFile);
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        QStringList pair;
+        if(!line.startsWith('#')) {
+            foreach(QString key, m_hostApdConfig.keys()) {
+                if (line.contains(key)) {
+                    QStringList pair = line.split("=");
+                    if (pair.size() !=2 ) {
+                        qWarning("something is critically wrong in conf file, we should think about aborting here");
+                    }
+                    m_hostApdConfig.insert(key, pair.last());
+                }
+            }
+        }
+    }
+}
+
+void MainHandler::writeHostAPDConf()
+{
+    QFile confFile(HOSTAPD_CONF_FILE);
+
+    if (!confFile.exists()) {
+        return;
+    }
+
+    if (!confFile.open(QIODevice::ReadOnly)) {
+        return;
+    }
+
+    {
+        QTextStream in(&confFile);
+        QString outBuffer;
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QStringList pair;
+            bool lineProcessed = false;
+            if(!line.startsWith('#')) {
+                foreach(QString key, m_hostApdConfig.keys()) {
+                    if (line.contains(key)) {
+                        outBuffer << key << "=" << m_hostApdConfig.value(key) << "\n";
+                        lineProcessed = true;
+                    }
+                }
+            }
+
+            if (!lineProcessed) {
+                outBuffer << line << "\n";
+            }
+        }
+    }
+
+    confFile.close();
+
+    if (!confFile.open(QIODevice::WriteOnly)) {
+        return;
+    }
+
+    QTextStream out(&confFile);
+    out << outBuffer;
 }
 
 void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
@@ -111,12 +216,12 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
         return;
     }
 
-//    if (m_mavproxyProcess) {
-//        qDebug() << "calling terminate on the current mavproxy process";
-//        terminateProcess(m_mavproxyProcess);
-//        mavPoxyProcessFinished();
-//        response << "old mavproxy process finsihsed";
-//    }
+    if (m_mavproxyProcess) {
+        qDebug() << "calling terminate on the current mavproxy process";
+        terminateProcess(m_mavproxyProcess);
+        mavPoxyProcessFinished();
+        response << "old mavproxy process finsihsed";
+    }
 
     if (!m_mavproxyProcess) {
         qDebug() << "starting a new mavproxy process" << mavProxyCommand;
@@ -130,53 +235,51 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
     response.end();
 }
 
-void MainHandler::thermalHandler(Tufao::HttpServerRequest &request,
+void MainHandler::uvcHandler(Tufao::HttpServerRequest &request,
                     Tufao::HttpServerResponse &response)
 {
     Q_UNUSED(request)
 
-    if (!m_hasThermal) {
-        response << "thermal not enabled";
+    if (!m_hasUvc) {
+        response << "uvc not enabled";
         response.end();
         return;
     }
 
     QUrlQuery queries(request.url());
     if (!queries.hasQueryItem(COMMAND_QUERY)) {
-        response << "command for thermal missing";
+        response << "command for uvc missing";
         response.end();
         return;
     }
 
-    auto thermalCommand = queries.queryItemValue(COMMAND_QUERY);
+    auto uvcCommand = queries.queryItemValue(COMMAND_QUERY);
 
 
-    if (thermalCommand.contains(TERMINATE_COMMAND) && m_thermalProcess) {
-        terminateProcess(m_thermalProcess);
-        thermalProcessFinished();
-        response << "thermal process terminated";
+    if (uvcCommand.contains(TERMINATE_COMMAND) && m_uvcProcess) {
+        terminateProcess(m_uvcProcess);
+        uvcProcessFinished();
+        response << "uvc process terminated";
         response.end();
         return;
     }
 
-    QString command = LEPTON_MJPEG_SERVER_COMMAND;
-
-    if (m_thermalProcess) {
-        qDebug() << "calling terminate on the current thermal process";
-        terminateProcess(m_thermalProcess);
-        thermalProcessFinished();
-        response << "old thermal process finsihsed";
+    if (m_uvcProcess) {
+        qDebug() << "calling terminate on the current uvc process";
+        terminateProcess(m_uvcProcess);
+        uvcProcessFinished();
+        response << "old uvc process finsihsed";
     }
 
-    if (!m_thermalProcess) {
-        qDebug() << "starting a new thermal process";
-        m_thermalProcess = new QProcess(this);
-        connect(m_thermalProcess, SIGNAL(finished(int)), SLOT(thermalProcessFinished()));
-        connect(m_thermalProcess, SIGNAL(destroyed()), SLOT(thermalProcessFinished()));
-        m_thermalProcess->start(command);
+    if (!m_uvcProcess) {
+        qDebug() << "starting a new uvc process";
+        m_uvcProcess = new QProcess(this);
+        connect(m_uvcProcess, SIGNAL(finished(int)), SLOT(uvcProcessFinished()));
+        connect(m_uvcProcess, SIGNAL(destroyed()), SLOT(uvcProcessFinished()));
+        m_uvcProcess->start(uvcCommand);
     }
 
-    response << "started thermal server with command : " << command.toUtf8();
+    response << "started uvc server with command : " << command.toUtf8();
     response.end();
 }
 
@@ -190,11 +293,11 @@ void MainHandler::terminateProcess(QProcess *process) const
     process->waitForFinished();
 }
 
-void MainHandler::thermalProcessFinished()
+void MainHandler::uvcProcessFinished()
 {
-    qDebug() << "thermal process finished";
-    m_thermalProcess->deleteLater();
-    m_thermalProcess = 0;
+    qDebug() << "uvc process finished";
+    m_uvcProcess->deleteLater();
+    m_uvcProcess = 0;
 }
 
 void MainHandler::mavPoxyProcessFinished()
@@ -239,8 +342,8 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
         connect(m_picamProcess, SIGNAL(finished(int)), SLOT(piCamProcessFinished()));
         connect(m_picamProcess, SIGNAL(destroyed()), SLOT(piCamProcessFinished()));
         m_gstProcess = new QProcess(m_picamProcess);
-        m_gstProcess->setStandardErrorFile("./gst.out");
-        m_gstProcess->setStandardErrorFile("./gst.err");
+        m_gstProcess->setStandardErrorFile("./picam_gst.out");
+        m_gstProcess->setStandardErrorFile("./picam_gst.err");
         m_picamProcess->setStandardOutputProcess(m_gstProcess);
         QStringList commands= piCamCommand.split("|");
         if (commands.size() <2 ) {

@@ -15,12 +15,17 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     Tufao::HttpServer server;
-    QString discoveryMessage("raspberry picam");
+    QString discoveryMessage;
 
     MainHandler h;
-    if (qEnvironmentVariableIsSet("thermal_cam")) {
-        discoveryMessage += " thermal";
-        h.setThermalEnabled(true);
+
+    if (qEnvironmentVariableIsSet("picam")) {
+        discoveryMessage += " picam";
+        h.setPiCamEnabled(true);
+    }
+    if (qEnvironmentVariableIsSet("uvc_cam")) {
+        discoveryMessage += " uvc";
+        h.setUvcEnabled(true);
     }
 
     if (qEnvironmentVariableIsSet("mavproxy")) {

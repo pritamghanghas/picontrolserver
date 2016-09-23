@@ -34,25 +34,14 @@ class MainHandler : public QObject,
     Q_OBJECT
 public:
     explicit MainHandler(QObject *parent = 0);
-    void setThermalEnabled(bool enabled = true)
-    {
-        m_hasThermal = enabled;
-    }
 
-    void setMavProxyEnabled(bool enabled = true)
-    {
-        m_hasMavProxy = true;
-    }
+    void setUvcEnabled(bool enabled = true) { m_hasUvc = enabled; }
+    void setMavProxyEnabled(bool enabled = true) { m_hasMavProxy = enabled; }
+    void setPiCamEnabled(bool enabled = true) { m_hasPiCam = enabled; }
 
-    bool getmavEnabled()
-    {
-        return m_hasMavProxy;
-    }
-
-    bool getThermalEnabled() const
-    {
-        return m_hasThermal;
-    }
+    bool getmavEnabled() { return m_hasMavProxy; }
+    bool getUvcEnabled() const { return m_hasUvc; }
+    bool getPiCamEnabled() const { return m_hasPiCam; }
 
 
 public slots:
@@ -60,7 +49,7 @@ public slots:
                        Tufao::HttpServerResponse &response) override;
 
 private slots:
-    void thermalProcessFinished();
+    void uvcProcessFinished();
     void piCamProcessFinished();
     void mavPoxyProcessFinished();
 
@@ -71,7 +60,7 @@ private:
     void picameraHandler(Tufao::HttpServerRequest &request,
                          Tufao::HttpServerResponse &response);
 
-    void thermalHandler(Tufao::HttpServerRequest &request,
+    void uvcHandler(Tufao::HttpServerRequest &request,
                         Tufao::HttpServerResponse &response);
 
     void oscontrolHandler(Tufao::HttpServerRequest &request,
@@ -80,14 +69,27 @@ private:
     void mavproxyHandler(Tufao::HttpServerRequest &request,
                          Tufao::HttpServerResponse &response);
 
+    void hostAPDGetHandler(Tufao::HttpServerRequest &request,
+                           Tufao::HttpServerResponse &response);
+
+    void hostAPDSetHandler(Tufao::HttpServerRequest &request,
+                           Tufao::HttpServerResponse &response);
+
+    void parseHostAPDConf();
+
+    void writeHostAPDConf();
+
     void terminateProcess(QProcess *process) const;
 
-    bool         m_hasThermal,
+    bool         m_hasUvc,
+                 m_hasPiCam,
                  m_hasMavProxy;
-    QProcess    *m_thermalProcess,
+    QProcess    *m_uvcProcess,
                 *m_picamProcess,
                 *m_gstProcess,
                 *m_mavproxyProcess;
+
+    QMap<QString,QString> m_hostApdConfig;
 };
 
 #endif // MAINHANDLER_H

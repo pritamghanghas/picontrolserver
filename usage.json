@@ -1,7 +1,7 @@
 {
     "desc" : "interfaces avilable for the client to control various services on raspilot",
-    "thermalcam" : {
-        "url": "$PI_ADDRESS:8080/thermalcam/?command=<start or terminate>",
+    "uvccam" : {
+        "url": "$PI_ADDRESS:8080/uvccam/?command=<start or terminate>",
         "desc": "FLIR Lepton module has a 25degree fov with 80x60 resolution. Only start and terminate are supported as there are not many options here"
     },
 
