@@ -199,7 +199,7 @@ void MainHandler::thermalProcessFinished()
 
 void MainHandler::mavPoxyProcessFinished()
 {
-    qDebug() << "mav proxy process finished";
+    qDebug() << "mav proxy process finished" << m_mavproxyProcess->readAll();
     m_mavproxyProcess->deleteLater();
     m_mavproxyProcess = 0;
 }
