@@ -37,12 +37,13 @@
 #include <QUrlQuery>
 #include <QProcess>
 #include <QFile>
+#include <QString>
 
 const char * UVC_URL_FRAGMENT           = "uvccam";
 const char * PICAM_URL_FRAGMENT         = "picam";
 const char * OSCONTROL_URL_FRAGMENT     = "os_command";
 const char * HOSTAPD_GET_FRAGMENT       = "hostapdget";
-const char * HOSTAPD_SET_HANDLER        = "hostapdset";
+const char * HOSTAPD_SET_FRAGMENT       = "hostapdset";
 const char * HOSTAPD_CONF_FILE          = "/etc/hostapd/hostapd.conf";
 const char * COMMAND_QUERY              = "command";
 const char * USAGE_JSON_PATH            = "usage.json";
@@ -53,8 +54,9 @@ MainHandler::MainHandler(QObject *parent) : QObject(parent),
    m_hasUvc(false), m_uvcProcess(0), m_picamProcess(0), m_mavproxyProcess(0), m_gstProcess(0)
 {
     m_hostApdConfig.insert("ssid", "");
-    m_hostApdConfig.insert("password", "");
+    m_hostApdConfig.insert("wpa_passphrase", "");
     m_hostApdConfig.insert("channel", "");
+    parseHostAPDConf();
 }
 
 bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
@@ -82,6 +84,14 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
         mavproxyHandler(request,response);
     }
 
+    if (urlString.contains(HOSTAPD_GET_FRAGMENT)) {
+        hostAPDGetHandler(request,response);
+    }
+
+    if (urlString.contains(HOSTAPD_SET_FRAGMENT)) {
+        hostAPDSetHandler(request,response);
+    }
+
     printUsage(request,response);
 
     return true;
@@ -90,7 +100,13 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
 void MainHandler::hostAPDGetHandler(Tufao::HttpServerRequest &request,
                                     Tufao::HttpServerResponse &response)
 {
-    response << QString("%1;%2;%3").arg(m_hostAPDSSID, m_hostAPDPassword, m_hostAPDChannel);
+    QString responseText;
+    foreach(QString key, m_hostApdConfig.keys()) {
+        responseText += key + "=" + m_hostApdConfig.value(key) + "\n";
+    }
+
+    qDebug() << "hostapd config response text: " << responseText;
+    response << responseText.toStdString().c_str();
     response.end();
     return;
 }
@@ -99,19 +115,18 @@ void MainHandler::hostAPDSetHandler(Tufao::HttpServerRequest &request,
                                     Tufao::HttpServerResponse &response)
 {
     QUrlQuery queries(request.url());
-    if (!queries.hasQueryItem("ssid")) {
-        m_hostAPDSSID = queries.queryItemValue("ssid");
+
+    foreach(QString key, m_hostApdConfig.keys()) {
+        if (queries.hasQueryItem(key)) {
+            m_hostApdConfig.insert(key, queries.queryItemValue(key));
+        }
     }
 
-    if (!queries.hasQueryItem("password")) {
-        m_hostAPDPassword = queries.queryItemValue("password");
-    }
-
-    if (!queries.hasQueryItem("channel")) {
-        m_hostAPDChannel = queries.queryItemValue("channel");
-    }
+    qDebug() << "after update config is " << m_hostApdConfig;
 
     writeHostAPDConf();
+    response << "hostapd configuration file update, the new configuration requires reboot of drone os";
+    response.end();
 }
 
 void MainHandler::parseHostAPDConf()
@@ -137,11 +152,13 @@ void MainHandler::parseHostAPDConf()
                     if (pair.size() !=2 ) {
                         qWarning("something is critically wrong in conf file, we should think about aborting here");
                     }
+                    qDebug() << "line of interest" << line;
                     m_hostApdConfig.insert(key, pair.last());
                 }
             }
         }
     }
+    qDebug() << m_hostApdConfig;
 }
 
 void MainHandler::writeHostAPDConf()
@@ -156,9 +173,10 @@ void MainHandler::writeHostAPDConf()
         return;
     }
 
+    QString outBuffer;
     {
         QTextStream in(&confFile);
-        QString outBuffer;
+        QTextStream outText(&outBuffer);
         while (!in.atEnd()) {
             QString line = in.readLine();
             QStringList pair;
@@ -166,14 +184,14 @@ void MainHandler::writeHostAPDConf()
             if(!line.startsWith('#')) {
                 foreach(QString key, m_hostApdConfig.keys()) {
                     if (line.contains(key)) {
-                        outBuffer << key << "=" << m_hostApdConfig.value(key) << "\n";
+                        outText << key << "=" << m_hostApdConfig.value(key) << "\n";
                         lineProcessed = true;
                     }
                 }
             }
 
             if (!lineProcessed) {
-                outBuffer << line << "\n";
+                outText << line << "\n";
             }
         }
     }
@@ -181,11 +199,12 @@ void MainHandler::writeHostAPDConf()
     confFile.close();
 
     if (!confFile.open(QIODevice::WriteOnly)) {
+        qWarning("couldn't open hostapd config file for writing");
         return;
     }
 
     QTextStream out(&confFile);
-    out << outBuffer;
+    out << outBuffer.toStdString().c_str();
 }
 
 void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
@@ -279,7 +298,7 @@ void MainHandler::uvcHandler(Tufao::HttpServerRequest &request,
         m_uvcProcess->start(uvcCommand);
     }
 
-    response << "started uvc server with command : " << command.toUtf8();
+    response << "started uvc server with command : " << uvcCommand.toUtf8();
     response.end();
 }
 

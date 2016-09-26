@@ -25,6 +25,7 @@
 
 #include <QtCore/QObject>
 #include <QProcess>
+#include <QMap>
 #include <Tufao/AbstractHttpServerRequestHandler>
 
 
