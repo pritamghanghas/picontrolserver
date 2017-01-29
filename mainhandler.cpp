@@ -143,11 +143,12 @@ void MainHandler::parseHostAPDConf()
 
     QTextStream in(&confFile);
     while (!in.atEnd()) {
-        QString line = in.readLine();
+        QString line = in.readLine().trimmed();
         QStringList pair;
-        if(!line.startsWith('#')) {
+        if(!line.startsWith('#') || !line.contains('=')) {
             foreach(QString key, m_hostApdConfig.keys()) {
-                if (line.contains(key)) {
+
+                if (line.startsWith(key)) {
                     QStringList pair = line.split("=");
                     if (pair.size() !=2 ) {
                         qWarning("something is critically wrong in conf file, we should think about aborting here");
@@ -227,7 +228,7 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
 
     auto mavProxyCommand = queries.queryItemValue(COMMAND_QUERY);
 
-    if (mavProxyCommand.contains(TERMINATE_COMMAND) && m_mavproxyProcess) {
+/*    if (mavProxyCommand.contains(TERMINATE_COMMAND) && m_mavproxyProcess) {
         terminateProcess(m_mavproxyProcess);
         mavPoxyProcessFinished();
         response << "mavproxy process terminated";
@@ -241,6 +242,7 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
         mavPoxyProcessFinished();
         response << "old mavproxy process finsihsed";
     }
+*/
 
     if (!m_mavproxyProcess) {
         qDebug() << "starting a new mavproxy process" << mavProxyCommand;
@@ -250,6 +252,7 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
         m_mavproxyProcess->start(mavProxyCommand);
         response << "started mav server with command : " << mavProxyCommand.toUtf8();
     }
+    response << "mav is already running, we don't restart autopilot";
 
     response.end();
 }

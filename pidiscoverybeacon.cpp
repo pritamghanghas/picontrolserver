@@ -14,13 +14,25 @@ PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, int discov
 
 void PiDiscoveryBeacon::sendHelloDataGram()
 {
-    qDebug() << "sending hello datagram: " << m_discoveryMessage;
+    QString subnet = broadcastSubnet();
+    qDebug() << "sending hello datagram: " << m_discoveryMessage << "to subnet: " << subnet;
     QByteArray helloDatagram(m_discoveryMessage.toUtf8());
 
-    qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress("192.168.42.255"), 31311);
+
+    qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress(subnet), 31311);
     if (rc == -1) {
         qDebug() << "failed to send hello datagram";
     }
+}
+
+QString PiDiscoveryBeacon::broadcastSubnet()
+{
+    QString address = deviceAddress();
+    QStringList segments = address.split('.');
+    if (segments.count() < 4) {
+        return "0.0.0.0";
+    }
+    return segments.at(0) + '.' + segments.at(1) + '.' + segments.at(2) + '.' + "255";
 }
 
 QString PiDiscoveryBeacon::deviceAddress()
@@ -31,8 +43,11 @@ QString PiDiscoveryBeacon::deviceAddress()
         if (address.isLoopback()) {
             continue;
         }
-        addr = address;
-        break;
+
+        if (address.protocol() == QAbstractSocket::IPv4Protocol) {
+            addr = address;
+            break;
+	}
     }
 
     QString address = addr.toString();

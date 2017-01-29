@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
     Tufao::HttpServer server;
-    QString discoveryMessage;
+    QString discoveryMessage("raspberry");
 
     MainHandler h;
 
@@ -30,6 +30,11 @@ int main(int argc, char *argv[])
 
     if (qEnvironmentVariableIsSet("mavproxy")) {
         discoveryMessage += " mavproxy";
+        h.setMavProxyEnabled(true);
+    }
+
+    if (qEnvironmentVariableIsSet("hostapd")) {
+        discoveryMessage += " hostapd";
         h.setMavProxyEnabled(true);
     }
 

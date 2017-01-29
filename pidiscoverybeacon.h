@@ -16,6 +16,7 @@ private slots:
     void sendHelloDataGram();
 
 private:
+    QString     broadcastSubnet();
     QString     m_discoveryMessage;
     QTimer      m_discoveryIntervalTimer;
     QUdpSocket  m_socket;
