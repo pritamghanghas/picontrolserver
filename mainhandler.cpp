@@ -424,7 +424,7 @@ void MainHandler::printUsage(Tufao::HttpServerRequest &request,
     }
     QString jsonData = file.readAll();
     response.headers().insert("Content-Type", "application/json");
-    jsonData.replace("$PI_ADDRESS", PiDiscoveryBeacon::deviceAddress());
+    jsonData.replace("$PI_ADDRESS", PiDiscoveryBeacon::deviceAddress().first());
     response << jsonData.toUtf8();
     response.end();
 }

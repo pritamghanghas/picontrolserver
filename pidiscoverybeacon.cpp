@@ -14,43 +14,49 @@ PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, int discov
 
 void PiDiscoveryBeacon::sendHelloDataGram()
 {
-    QString subnet = broadcastSubnet();
-    qDebug() << "sending hello datagram: " << m_discoveryMessage << "to subnet: " << subnet;
+    QStringList subnets = broadcastSubnet();
+    qDebug() << "sending hello datagram: " << m_discoveryMessage << "to subnets: " << subnets;
     QByteArray helloDatagram(m_discoveryMessage.toUtf8());
 
-
-    qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress(subnet), 31311);
-    if (rc == -1) {
-        qDebug() << "failed to send hello datagram";
+    Q_FOREACH(const QString subnet, subnets)
+    {
+        qint64 rc = m_socket.writeDatagram(helloDatagram, QHostAddress(subnet), 31311);
+        if (rc == -1) {
+            qDebug() << "failed to send hello datagram to broadcast address" << subnet;
+        }
     }
 }
 
-QString PiDiscoveryBeacon::broadcastSubnet()
+QStringList PiDiscoveryBeacon::broadcastSubnet()
 {
-    QString address = deviceAddress();
-    QStringList segments = address.split('.');
-    if (segments.count() < 4) {
-        return "0.0.0.0";
+    QStringList subnets;
+    QStringList ads = deviceAddress();
+
+    Q_FOREACH(const QString address, ads)
+    {
+        QStringList segments = address.split('.');
+        if (segments.count() < 4) {
+            subnets << "0.0.0.0";
+            continue;
+        }
+        subnets << segments.at(0) + '.' + segments.at(1) + '.' + segments.at(2) + '.' + "255";
     }
-    return segments.at(0) + '.' + segments.at(1) + '.' + segments.at(2) + '.' + "255";
+    return subnets;
 }
 
-QString PiDiscoveryBeacon::deviceAddress()
+QStringList PiDiscoveryBeacon::deviceAddress()
 {
     QList<QHostAddress> addresses = QNetworkInterface::allAddresses();
-    QHostAddress addr;
+    QStringList ads;
     Q_FOREACH(QHostAddress address, addresses) {
         if (address.isLoopback()) {
             continue;
         }
 
         if (address.protocol() == QAbstractSocket::IPv4Protocol) {
-            addr = address;
-            break;
+            ads.append(address.toString());
 	}
     }
-
-    QString address = addr.toString();
-    qDebug() << "got the following address for the device" << address;
-    return address;
+    qDebug() << "got the following address for the device" << ads;
+    return ads;
 }
