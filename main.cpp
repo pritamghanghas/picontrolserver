@@ -9,7 +9,6 @@
 
 #define BEACON_INTERVAL 3*1000 // 3sec
 
-
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
@@ -18,6 +17,7 @@ int main(int argc, char *argv[])
     QString discoveryMessage("raspberry");
 
     MainHandler h;
+    int beaconInterval = BEACON_INTERVAL;
 
     if (qEnvironmentVariableIsSet("picam")) {
         discoveryMessage += " picam";
@@ -38,6 +38,13 @@ int main(int argc, char *argv[])
         h.setMavProxyEnabled(true);
     }
 
+    if (qEnvironmentVariableIsSet("beacon_interval")) {
+//        beaconInterval = qEnvironmentVariableIntValue("beacon_interval");
+    }
+    discoveryMessage += QString(" b%1").arg(beaconInterval);
+
+    qDebug() << "beacon message is " << beaconInterval;
+
     Tufao::HttpServerRequestRouter router{
         {QRegularExpression{"^/([^/]+)$"}, h},
         {QRegularExpression{".*"}, h}
@@ -48,7 +55,7 @@ int main(int argc, char *argv[])
 
     server.listen(QHostAddress::Any, 8080);
 
-    PiDiscoveryBeacon beacon(discoveryMessage, BEACON_INTERVAL);
+    PiDiscoveryBeacon beacon(discoveryMessage, beaconInterval);
     Q_UNUSED(beacon)
 
     return a.exec();

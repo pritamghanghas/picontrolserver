@@ -5,18 +5,27 @@ PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, int discov
     m_discoveryMessage(discoveryMessage),
     QObject(parent)
 {
-    sendHelloDataGram();
-
+    m_discoveryIntervalTimer.setTimerType(Qt::PreciseTimer);
     m_discoveryIntervalTimer.setInterval(discoveryInterval);
+    m_seqNumber = 0;
+
+    sendHelloDataGram();
     connect(&m_discoveryIntervalTimer, SIGNAL(timeout()), SLOT(sendHelloDataGram()));
     m_discoveryIntervalTimer.start();
+
 }
 
 void PiDiscoveryBeacon::sendHelloDataGram()
 {
     QStringList subnets = broadcastSubnet();
-    qDebug() << "sending hello datagram: " << m_discoveryMessage << "to subnets: " << subnets;
-    QByteArray helloDatagram(m_discoveryMessage.toUtf8());
+
+    QString message = m_discoveryMessage;
+    message += QString(" s%1").arg(m_seqNumber);
+    m_seqNumber++;
+
+    qDebug() << "sending hello datagram: " << message << "to subnets: " << subnets;
+
+    QByteArray helloDatagram(message.toUtf8());
 
     Q_FOREACH(const QString subnet, subnets)
     {

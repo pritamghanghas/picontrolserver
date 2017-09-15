@@ -20,6 +20,7 @@ private:
     QString     m_discoveryMessage;
     QTimer      m_discoveryIntervalTimer;
     QUdpSocket  m_socket;
+    quint32     m_seqNumber;
 };
 
 #endif // PIDISCOVERYBEACON_H
