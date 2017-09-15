@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     }
 
     if (qEnvironmentVariableIsSet("beacon_interval")) {
-//        beaconInterval = qEnvironmentVariableIntValue("beacon_interval");
+        beaconInterval = qEnvironmentVariableIntValue("beacon_interval");
     }
     discoveryMessage += QString(" b%1").arg(beaconInterval);
 
