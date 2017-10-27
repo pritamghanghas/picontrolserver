@@ -1,9 +1,10 @@
 #include "pidiscoverybeacon.h"
 #include <QNetworkInterface>
 
-PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, int discoveryInterval, QObject *parent) :
+PiDiscoveryBeacon::PiDiscoveryBeacon(const QString &discoveryMessage, const QStringList interfaces, int discoveryInterval,  QObject *parent) :
+    QObject(parent),
     m_discoveryMessage(discoveryMessage),
-    QObject(parent)
+    m_activeInterfaces(interfaces)
 {
     m_discoveryIntervalTimer.setTimerType(Qt::PreciseTimer);
     m_discoveryIntervalTimer.setInterval(discoveryInterval);
@@ -20,7 +21,7 @@ void PiDiscoveryBeacon::sendHelloDataGram()
     QStringList subnets = broadcastSubnet();
 
     QString message = m_discoveryMessage;
-    message += QString(" s%1").arg(m_seqNumber);
+    message += QString(" ser%1").arg(m_seqNumber);
     m_seqNumber++;
 
     qDebug() << "sending hello datagram: " << message << "to subnets: " << subnets;
@@ -55,17 +56,23 @@ QStringList PiDiscoveryBeacon::broadcastSubnet()
 
 QStringList PiDiscoveryBeacon::deviceAddress()
 {
-    QList<QHostAddress> addresses = QNetworkInterface::allAddresses();
+    QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+
     QStringList ads;
-    Q_FOREACH(QHostAddress address, addresses) {
-        if (address.isLoopback()) {
+    Q_FOREACH(QNetworkInterface interface, interfaces) {
+        if (!m_activeInterfaces.contains(interface.name())) {
             continue;
         }
 
-        if (address.protocol() == QAbstractSocket::IPv4Protocol) {
-            ads.append(address.toString());
-	}
+        QList<QHostAddress> interfaceAddress = interface.allAddresses();
+
+         Q_FOREACH(QHostAddress address, interfaceAddress) {
+
+            if (address.protocol() == QAbstractSocket::IPv4Protocol) {
+                ads.append(address.toString());
+            }
+        }
     }
-    qDebug() << "got the following address for the device" << ads;
+    qDebug() << "got the following addresses for the device" << ads;
     return ads;
 }

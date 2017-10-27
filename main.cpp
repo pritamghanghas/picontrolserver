@@ -18,32 +18,57 @@ int main(int argc, char *argv[])
 
     MainHandler h;
     int beaconInterval = BEACON_INTERVAL;
+    QString activeInterfaces = "wlan0";
 
     if (qEnvironmentVariableIsSet("picam")) {
-        discoveryMessage += " picam";
-        h.setPiCamEnabled(true);
-    }
-    if (qEnvironmentVariableIsSet("uvc_cam")) {
-        discoveryMessage += " uvc";
-        h.setUvcEnabled(true);
+        h.setPiCamEnabled();
     }
 
-    if (qEnvironmentVariableIsSet("mavproxy")) {
-        discoveryMessage += " mavproxy";
-        h.setMavProxyEnabled(true);
+    if (qEnvironmentVariableIsSet("uvccam")) {
+        h.setUvcEnabled();
+    }
+
+    if (qEnvironmentVariableIsSet("mavudp")) {
+        h.setMAVUdpEnabled();
     }
 
     if (qEnvironmentVariableIsSet("hostapd")) {
-        discoveryMessage += " hostapd";
-        h.setMavProxyEnabled(true);
+        h.setHostAPDEnabled();
     }
+
+    if (qEnvironmentVariableIsSet("mavtcp")) {
+        h.setMAVTcpEnabled();
+    }
+
+    if (qEnvironmentVariableIsSet("sik")) {
+        h.setSikEnabled();
+    }
+
+    if (qEnvironmentVariableIsSet("lepton")) {
+        h.setLeptonEnabled();
+    }
+
+    if (qEnvironmentVariableIsSet("seek")) {
+        h.setSeekEnabled();
+    }
+
+    if (qEnvironmentVariableIsSet("unique_id")) {
+        discoveryMessage += QString(" %1").arg(QString::fromLocal8Bit(qgetenv("unique_id")));
+    }
+
+    QString caps = QString::number(h.getCaps());
+    discoveryMessage += QString(" %1").arg(caps);
 
     if (qEnvironmentVariableIsSet("beacon_interval")) {
         beaconInterval = qEnvironmentVariableIntValue("beacon_interval");
     }
-    discoveryMessage += QString(" b%1").arg(beaconInterval);
 
-    qDebug() << "beacon message is " << beaconInterval;
+    if (qEnvironmentVariableIsSet("interface")) {
+        activeInterfaces = qEnvironmentVariableIntValue("interfaces");
+    }
+
+    discoveryMessage += QString(" %1").arg(beaconInterval);
+
 
     Tufao::HttpServerRequestRouter router{
         {QRegularExpression{"^/([^/]+)$"}, h},
@@ -55,7 +80,9 @@ int main(int argc, char *argv[])
 
     server.listen(QHostAddress::Any, 8080);
 
-    PiDiscoveryBeacon beacon(discoveryMessage, beaconInterval);
+    QStringList activeInterfacesList = activeInterfaces.split(",");
+
+    PiDiscoveryBeacon beacon(discoveryMessage, activeInterfacesList, beaconInterval);
     Q_UNUSED(beacon)
 
     return a.exec();

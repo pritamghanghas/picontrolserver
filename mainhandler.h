@@ -27,6 +27,7 @@
 #include <QProcess>
 #include <QMap>
 #include <Tufao/AbstractHttpServerRequestHandler>
+#include "pidiscoverybeacon.h"
 
 
 class MainHandler : public QObject,
@@ -36,13 +37,24 @@ class MainHandler : public QObject,
 public:
     explicit MainHandler(QObject *parent = 0);
 
-    void setUvcEnabled(bool enabled = true) { m_hasUvc = enabled; }
-    void setMavProxyEnabled(bool enabled = true) { m_hasMavProxy = enabled; }
-    void setPiCamEnabled(bool enabled = true) { m_hasPiCam = enabled; }
+    void setUvcEnabled()         { m_caps |= NodeCaps::UVC; }
+    void setMAVUdpEnabled()      { m_caps |= NodeCaps::MAVUDP; }
+    void setPiCamEnabled()       { m_caps |= NodeCaps::PICAM; }
+    void setHostAPDEnabled()     { m_caps |= NodeCaps::AP; }
+    void setLeptonEnabled()      { m_caps |= NodeCaps::LEPTON; }
+    void setSikEnabled()         { m_caps |= NodeCaps::SIKRADIO; }
+    void setSeekEnabled()        { m_caps |= NodeCaps::SEEK; }
+    void setMAVTcpEnabled()      { m_caps |= NodeCaps::MAVTCP; }
 
-    bool getmavEnabled() { return m_hasMavProxy; }
-    bool getUvcEnabled() const { return m_hasUvc; }
-    bool getPiCamEnabled() const { return m_hasPiCam; }
+    bool getMAVUdpEnabled() const       { return m_caps & NodeCaps::MAVUDP; }
+    bool getUvcEnabled() const          { return m_caps & NodeCaps::UVC; }
+    bool getPiCamEnabled() const        { return m_caps & NodeCaps::PICAM; }
+    bool getHostAPDEnabled() const      { return m_caps & NodeCaps::AP; }
+    bool getLeptonEnabled() const       { return m_caps & NodeCaps::LEPTON; }
+    bool getSeekEnabled() const         { return m_caps & NodeCaps::SEEK; }
+    bool getSikEnabled() const          { return m_caps & NodeCaps::SIKRADIO; }
+    bool getMAVTcpEnabled() const       { return m_caps & NodeCaps::MAVTCP; }
+    int getCaps() const                 { return m_caps; }
 
 
 public slots:
@@ -82,13 +94,11 @@ private:
 
     void terminateProcess(QProcess *process) const;
 
-    bool         m_hasUvc,
-                 m_hasPiCam,
-                 m_hasMavProxy;
+    int          m_caps = 0;
     QProcess    *m_uvcProcess,
                 *m_picamProcess,
-                *m_gstProcess,
-                *m_mavproxyProcess;
+                *m_mavProcess,
+                *m_gstProcess;
 
     QMap<QString,QString> m_hostApdConfig;
 };

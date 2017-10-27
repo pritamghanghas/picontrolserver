@@ -51,7 +51,7 @@ const char * TERMINATE_COMMAND          = "terminate";
 const char * MAVPROXY_FRAGMENT          = "mavproxy";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
-   m_hasUvc(false), m_uvcProcess(0), m_picamProcess(0), m_mavproxyProcess(0), m_gstProcess(0)
+   m_uvcProcess(0), m_picamProcess(0), m_mavProcess(0), m_gstProcess(0)
 {
     m_hostApdConfig.insert("ssid", "");
     m_hostApdConfig.insert("wpa_passphrase", "");
@@ -100,6 +100,8 @@ bool MainHandler::handleRequest(Tufao::HttpServerRequest &request,
 void MainHandler::hostAPDGetHandler(Tufao::HttpServerRequest &request,
                                     Tufao::HttpServerResponse &response)
 {
+    Q_UNUSED(request);
+
     QString responseText;
     foreach(QString key, m_hostApdConfig.keys()) {
         responseText += key + "=" + m_hostApdConfig.value(key) + "\n";
@@ -144,7 +146,6 @@ void MainHandler::parseHostAPDConf()
     QTextStream in(&confFile);
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
-        QStringList pair;
         if(!line.startsWith('#') || !line.contains('=')) {
             foreach(QString key, m_hostApdConfig.keys()) {
 
@@ -213,7 +214,7 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
 {
     Q_UNUSED(request)
 
-    if (!m_hasMavProxy) {
+    if (!getMAVUdpEnabled()) {
         response << "mavproxy not enabled";
         response.end();
         return;
@@ -244,12 +245,12 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
     }
 */
 
-    if (!m_mavproxyProcess) {
+    if (!m_mavProcess) {
         qDebug() << "starting a new mavproxy process" << mavProxyCommand;
-        m_mavproxyProcess = new QProcess(this);
-        connect(m_mavproxyProcess, SIGNAL(finished(int)), SLOT(mavPoxyProcessFinished()));
-        connect(m_mavproxyProcess, SIGNAL(destroyed()), SLOT(mavPoxyProcessFinished()));
-        m_mavproxyProcess->start(mavProxyCommand);
+        m_mavProcess = new QProcess(this);
+        connect(m_mavProcess, SIGNAL(finished(int)), SLOT(mavPoxyProcessFinished()));
+        connect(m_mavProcess, SIGNAL(destroyed()), SLOT(mavPoxyProcessFinished()));
+        m_mavProcess->start(mavProxyCommand);
         response << "started mav server with command : " << mavProxyCommand.toUtf8();
     }
     response << "mav is already running, we don't restart autopilot";
@@ -262,7 +263,7 @@ void MainHandler::uvcHandler(Tufao::HttpServerRequest &request,
 {
     Q_UNUSED(request)
 
-    if (!m_hasUvc) {
+    if (!getUvcEnabled()) {
         response << "uvc not enabled";
         response.end();
         return;
@@ -324,9 +325,9 @@ void MainHandler::uvcProcessFinished()
 
 void MainHandler::mavPoxyProcessFinished()
 {
-    qDebug() << "mav proxy process finished" << m_mavproxyProcess->readAll();
-    m_mavproxyProcess->deleteLater();
-    m_mavproxyProcess = 0;
+    qDebug() << "mav proxy process finished" << m_mavProcess->readAll();
+    m_mavProcess->deleteLater();
+    m_mavProcess = 0;
 }
 
 void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
@@ -424,7 +425,6 @@ void MainHandler::printUsage(Tufao::HttpServerRequest &request,
     }
     QString jsonData = file.readAll();
     response.headers().insert("Content-Type", "application/json");
-    jsonData.replace("$PI_ADDRESS", PiDiscoveryBeacon::deviceAddress().first());
     response << jsonData.toUtf8();
     response.end();
 }

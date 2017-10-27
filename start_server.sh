@@ -5,8 +5,16 @@
 
 # start control server
 export LD_LIBRARY_PATH=/usr/local/lib/
-export mavproxy=1
+export mavudp=1
 export picam=1
+#export uvccam=1
+#export mavtcp=1
+#export hostapd=1
+#export sik=1
+#export lepton=1
+#export seek=1
+export interfaces=lan0 # comma seperated list of interfaces, no spaces
+export beacon_interval=3
 cd /home/pi/ardupilot/picontrolserver/
 /home/pi/ardupilot/picontrolserver/picontrolserver > /home/pi/ardupilot/logs/picontrolserver.out 2>&1 &
 cd -
