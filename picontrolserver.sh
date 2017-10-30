@@ -50,7 +50,7 @@ export hostapd=1
 #export sik=1
 #export lepton=1
 #export seek=1
-export interfaces=lan0 # comma seperated list of interfaces, no spaces
+export interfaces=wlan0,zt0 # comma seperated list of interfaces, no spaces
 export beacon_interval=3
 
 export unique_id=`cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2`
