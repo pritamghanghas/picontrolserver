@@ -51,9 +51,14 @@ export hostapd=1
 #export lepton=1
 #export seek=1
 export interfaces=wlan0,zt0 # comma seperated list of interfaces, no spaces
-export beacon_interval=3
+export beacon_interval=10000 # milli seocnds
 
-export unique_id=`cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2`
+# change unique id to something usefull to identify the vehicle 
+unique_id="sitl" 
+if [ "x${unique_id}" == "x" ]; then
+	export unique_id=`cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2`
+fi
+
 date
 while :; do
          cd $AP_BIN_DIR 

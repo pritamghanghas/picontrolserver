@@ -68,7 +68,7 @@ QStringList PiDiscoveryBeacon::deviceAddress()
 
          Q_FOREACH(QHostAddress address, interfaceAddress) {
 
-            if (address.protocol() == QAbstractSocket::IPv4Protocol) {
+            if (address.protocol() == QAbstractSocket::IPv4Protocol && !address.isLoopback()) {
                 ads.append(address.toString());
             }
         }
