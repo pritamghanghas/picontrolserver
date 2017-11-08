@@ -2,15 +2,15 @@
 #define PIDISCOVERYBEACON_H
 
 enum NodeCaps {
-    NONE        = 0x00,
-    PICAM       = 0x01,
-    UVC         = 0x03,
-    LEPTON      = 0x07,
-    SEEK        = 0x0F,
-    MAVTCP      = 0x1f,
-    MAVUDP      = 0x3F,
-    AP          = 0x7F,
-    SIKRADIO    = 0xFF,
+    NONE        = 0,
+    PICAM       = 1,
+    UVC         = 1 << 1,
+    LEPTON      = 1 << 2,
+    SEEK        = 1 << 3,
+    MAVTCP      = 1 << 4,
+    MAVUDP      = 1 << 5,
+    AP          = 1 << 6,
+    SIKRADIO    = 1 << 7,
 };
 
 #include <QObject>

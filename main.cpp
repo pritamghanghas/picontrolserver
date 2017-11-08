@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
 
     Tufao::HttpServer server;
     QString discoveryMessage("raspberry");
+    QString uniqueID = "pi";
 
     MainHandler h;
     int beaconInterval = BEACON_INTERVAL;
@@ -53,8 +54,10 @@ int main(int argc, char *argv[])
     }
 
     if (qEnvironmentVariableIsSet("unique_id")) {
-        discoveryMessage += QString(" %1").arg(QString::fromLocal8Bit(qgetenv("unique_id")));
+        uniqueID = QString::fromLocal8Bit(qgetenv("unique_id"));
     }
+
+    discoveryMessage += QString(" %1").arg(uniqueID);
 
     QString caps = QString::number(h.getCaps());
     discoveryMessage += QString(" %1").arg(caps);
