@@ -21,7 +21,7 @@ void PiDiscoveryBeacon::sendHelloDataGram()
     QStringList subnets = broadcastSubnet();
 
     QString message = m_discoveryMessage;
-    message += QString(" ser%1").arg(m_seqNumber);
+    message += QString(" %1").arg(m_seqNumber);
     m_seqNumber++;
 
     qDebug() << "sending hello datagram: " << message << "to subnets: " << subnets;
