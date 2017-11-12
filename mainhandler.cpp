@@ -230,7 +230,7 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
     auto mavProxyCommand = queries.queryItemValue(COMMAND_QUERY);
 
     if (mavProxyCommand.contains(TERMINATE_COMMAND) && m_mavProcess) {
-        terminateProcess(m_mavproxyProcess);
+        terminateProcess(m_mavProcess);
         mavPoxyProcessFinished();
         response << "mavproxy process terminated";
         response.end();
@@ -239,7 +239,7 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
 
     if (m_mavProcess) {
         qDebug() << "calling terminate on the current mavproxy process";
-        terminateProcess(m_mavproxyProcess);
+        terminateProcess(m_mavProcess);
         mavPoxyProcessFinished();
         response << "old mavproxy process finsihsed";
     }
