@@ -100,6 +100,8 @@ private:
                 *m_mavProcess,
                 *m_gstProcess;
 
+    QString      m_mavProcessCmdline;
+
     QMap<QString,QString> m_hostApdConfig;
 };
 

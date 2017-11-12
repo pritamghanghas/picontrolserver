@@ -237,6 +237,12 @@ void MainHandler::mavproxyHandler(Tufao::HttpServerRequest &request,
         return;
     }
 
+    if (m_mavProcess && (m_mavProcessCmdline == mavProxyCommand)) {
+        response << "already running the same command";
+        response.end();
+        return;
+    }
+
     if (m_mavProcess) {
         qDebug() << "calling terminate on the current mavproxy process";
         terminateProcess(m_mavProcess);
