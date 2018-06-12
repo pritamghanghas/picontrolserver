@@ -39,6 +39,8 @@
 #include <QFile>
 #include <QString>
 
+
+// these fragments and commands have to match with qgc
 const char * UVC_URL_FRAGMENT           = "uvccam";
 const char * PICAM_URL_FRAGMENT         = "picam";
 const char * OSCONTROL_URL_FRAGMENT     = "os_command";
@@ -48,10 +50,11 @@ const char * HOSTAPD_CONF_FILE          = "/etc/hostapd/hostapd.conf";
 const char * COMMAND_QUERY              = "command";
 const char * USAGE_JSON_PATH            = "usage.json";
 const char * TERMINATE_COMMAND          = "terminate";
+const char * MJPEG_COMMAND              = "mapping";
 const char * MAVPROXY_FRAGMENT          = "mavproxy";
 
 MainHandler::MainHandler(QObject *parent) : QObject(parent),
-   m_uvcProcess(0), m_picamProcess(0), m_mavProcess(0), m_gstProcess(0)
+   m_uvcProcess(0), m_picamProcess(0), m_pimjpegProcess(0), m_mavProcess(0), m_gstProcess(0)
 {
     m_hostApdConfig.insert("ssid", "");
     m_hostApdConfig.insert("wpa_passphrase", "");
@@ -347,19 +350,32 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
 
     auto piCamCommand = queries.queryItemValue(COMMAND_QUERY);
 
-    if (piCamCommand.contains(TERMINATE_COMMAND) && m_picamProcess) {
-        terminateProcess(m_picamProcess);
-        piCamProcessFinished();
-        response << "picam process terminated";
-        response.end();
-        return;
-    }
-
+    // we get this command only when something changes, we need to terminate everything in that case.
+    // start new.
     if (m_picamProcess) {
         qDebug() << "calling terminate on current picam pipeline";
         terminateProcess(m_picamProcess);
         piCamProcessFinished();
-        response << "picam process terminated";
+        response << "old picam process terminated";
+    }
+
+    if (m_pimjpegProcess) {
+            terminateProcess(m_pimjpegProcess);
+            pimjpegProcessFinished();
+            response << "pimjpeg process terminated";
+    }
+
+    if (piCamCommand.contains(TERMINATE_COMMAND)) {
+        response.end();
+        return;
+    }
+
+    if (piCamCommand.contains(MJPEG_COMMAND)) {
+        qDebug() << "staring a new picam pipeline";
+        m_pimjpegProcess = new QProcess(this);
+        connect(m_pimjpegProcess, SIGNAL(finished(int)), SLOT(pimjpegProcessFinished()));
+        connect(m_pimjpegProcess, SIGNAL(destroyed()), SLOT(pimjpegProcessFinished()));
+        m_pimjpegProcess->start('pimjpegserver.py');
     }
 
     if (!m_picamProcess) {
@@ -392,6 +408,14 @@ void MainHandler::piCamProcessFinished()
     m_picamProcess->disconnect();
     m_picamProcess->deleteLater();
     m_picamProcess = 0;
+}
+
+void MainHandler::pimjpegProcessFinished()
+{
+    qDebug() << "recieved picam process finsihed or termintaed";
+    m_pimjpegProcess->disconnect();
+    m_pimjpegProcess->deleteLater();
+    m_pimjpegProcess = 0;
 }
 
 

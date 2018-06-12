@@ -64,6 +64,7 @@ public slots:
 private slots:
     void uvcProcessFinished();
     void piCamProcessFinished();
+    void pimjpegProcessFinished();
     void mavPoxyProcessFinished();
 
 private:
@@ -97,6 +98,7 @@ private:
     int          m_caps = 0;
     QProcess    *m_uvcProcess,
                 *m_picamProcess,
+                *m_pimjpegProcess,
                 *m_mavProcess,
                 *m_gstProcess;
 
