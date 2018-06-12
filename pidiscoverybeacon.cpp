@@ -46,11 +46,12 @@ QStringList PiDiscoveryBeacon::broadcastSubnet()
     {
         QStringList segments = address.split('.');
         if (segments.count() < 4) {
-            subnets << "0.0.0.0";
+//            subnets << "0.0.0.0";
             continue;
         }
         subnets << segments.at(0) + '.' + segments.at(1) + '.' + segments.at(2) + '.' + "255";
     }
+    qDebug() << "we will boradcast to following subnets" << subnets;
     return subnets;
 }
 
