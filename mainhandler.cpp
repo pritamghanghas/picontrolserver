@@ -360,9 +360,9 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
     }
 
     if (m_pimjpegProcess) {
-            terminateProcess(m_pimjpegProcess);
-            pimjpegProcessFinished();
-            response << "pimjpeg process terminated";
+        terminateProcess(m_pimjpegProcess);
+        pimjpegProcessFinished();
+        response << "pimjpeg process terminated";
     }
 
     if (piCamCommand.contains(TERMINATE_COMMAND)) {
@@ -371,7 +371,7 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
     }
 
     if (piCamCommand.contains(MJPEG_COMMAND)) {
-        qDebug() << "staring a new picam pipeline";
+        qDebug() << "staring a new pimjpegserver";
         m_pimjpegProcess = new QProcess(this);
         connect(m_pimjpegProcess, SIGNAL(finished(int)), SLOT(pimjpegProcessFinished()));
         connect(m_pimjpegProcess, SIGNAL(destroyed()), SLOT(pimjpegProcessFinished()));
