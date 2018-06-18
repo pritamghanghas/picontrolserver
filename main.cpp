@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     }
 
     if (qEnvironmentVariableIsSet("interfaces")) {
-        activeInterfaces = qEnvironmentVariableIntValue("interfaces");
+        activeInterfaces = QString::fromLocal8Bit(qgetenv("interfaces"));
     }
 
     discoveryMessage += QString(" %1").arg(beaconInterval);
