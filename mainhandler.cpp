@@ -375,7 +375,9 @@ void MainHandler::picameraHandler(Tufao::HttpServerRequest &request,
         m_pimjpegProcess = new QProcess(this);
         connect(m_pimjpegProcess, SIGNAL(finished(int)), SLOT(pimjpegProcessFinished()));
         connect(m_pimjpegProcess, SIGNAL(destroyed()), SLOT(pimjpegProcessFinished()));
-        m_pimjpegProcess->start('pimjpegserver.py');
+        m_pimjpegProcess->start("/home/pi/ardupilot/bin/pimjpegserver.py");
+        response.end();
+        return;
     }
 
     if (!m_picamProcess) {

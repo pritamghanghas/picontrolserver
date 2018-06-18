@@ -45,8 +45,9 @@ QStringList PiDiscoveryBeacon::broadcastSubnet()
     Q_FOREACH(const QString address, ads)
     {
         QStringList segments = address.split('.');
+        // split failed default to all
         if (segments.count() < 4) {
-//            subnets << "0.0.0.0";
+            subnets << "0.0.0.0";
             continue;
         }
         subnets << segments.at(0) + '.' + segments.at(1) + '.' + segments.at(2) + '.' + "255";

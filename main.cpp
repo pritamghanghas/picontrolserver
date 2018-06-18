@@ -4,6 +4,7 @@
 #include <Tufao/HttpServerRequest>
 #include <Tufao/HttpServerRequestRouter>
 #include <Tufao/Headers>
+#include <QtDebug>
 #include "mainhandler.h"
 #include "pidiscoverybeacon.h"
 
@@ -66,7 +67,7 @@ int main(int argc, char *argv[])
         beaconInterval = qEnvironmentVariableIntValue("beacon_interval");
     }
 
-    if (qEnvironmentVariableIsSet("interface")) {
+    if (qEnvironmentVariableIsSet("interfaces")) {
         activeInterfaces = qEnvironmentVariableIntValue("interfaces");
     }
 
@@ -84,6 +85,8 @@ int main(int argc, char *argv[])
     server.listen(QHostAddress::Any, 8080);
 
     QStringList activeInterfacesList = activeInterfaces.split(",");
+
+    qDebug() << "interfaces from environment variable " << activeInterfacesList;
 
     PiDiscoveryBeacon beacon(discoveryMessage, activeInterfacesList, beaconInterval);
     Q_UNUSED(beacon)
