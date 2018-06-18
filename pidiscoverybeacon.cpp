@@ -39,21 +39,27 @@ void PiDiscoveryBeacon::sendHelloDataGram()
 
 QStringList PiDiscoveryBeacon::broadcastSubnet()
 {
-    QStringList subnets;
-    QStringList ads = deviceAddress();
+    QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
 
-    Q_FOREACH(const QString address, ads)
-    {
-        QStringList segments = address.split('.');
-        // split failed default to all
-        if (segments.count() < 4) {
-            subnets << "0.0.0.0";
+    QStringList ads;
+    Q_FOREACH(QNetworkInterface interface, interfaces) {
+        if (!m_activeInterfaces.contains(interface.name())) {
+            qDebug() << "not one of the active interfaces";
             continue;
         }
-        subnets << segments.at(0) + '.' + segments.at(1) + '.' + segments.at(2) + '.' + "255";
+
+        QList<QNetworkAddressEntry> interfaceAddress = interface.addressEntries();
+
+         Q_FOREACH(QNetworkAddressEntry address, interfaceAddress) {
+             QHostAddress ip = address.ip();
+
+            if (ip.protocol() == QAbstractSocket::IPv4Protocol && !ip.isLoopback()) {
+                ads.append(address.broadcast().toString());
+            }
+        }
     }
-    qDebug() << "we will boradcast to following subnets" << subnets;
-    return subnets;
+    qDebug() << "got the following broadcast addresses for the device" << ads;
+    return ads;
 }
 
 QStringList PiDiscoveryBeacon::deviceAddress()
@@ -63,15 +69,17 @@ QStringList PiDiscoveryBeacon::deviceAddress()
     QStringList ads;
     Q_FOREACH(QNetworkInterface interface, interfaces) {
         if (!m_activeInterfaces.contains(interface.name())) {
+            qDebug() << "not one of the active interfaces";
             continue;
         }
 
-        QList<QHostAddress> interfaceAddress = interface.allAddresses();
+        QList<QNetworkAddressEntry> interfaceAddress = interface.addressEntries();
 
-         Q_FOREACH(QHostAddress address, interfaceAddress) {
+         Q_FOREACH(QNetworkAddressEntry address, interfaceAddress) {
+             QHostAddress ip = address.ip();
 
-            if (address.protocol() == QAbstractSocket::IPv4Protocol && !address.isLoopback()) {
-                ads.append(address.toString());
+            if (ip.protocol() == QAbstractSocket::IPv4Protocol && !ip.isLoopback()) {
+                ads.append(ip.toString());
             }
         }
     }
